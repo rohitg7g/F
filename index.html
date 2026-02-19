@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GoatBro SMP</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+body{margin:0;font-family:sans-serif;background:#f3ebff;text-align:center}
+.card{background:white;margin:15px;padding:20px;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.1)}
+.btn{background:#b084ff;color:white;border:none;padding:14px;border-radius:12px;width:90%;font-size:16px}
+a{color:#7a4cff;text-decoration:none;font-weight:bold}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h2>🟣 GoatBro SMP</h2>
+<p><b>IP:</b> goatbro.minefort.com</p>
+<p><b>Java:</b> 25565 | <b>Bedrock:</b> 19132</p>
+<p>Players online: <span id="players">0</span></p>
+</div>
+
+<div class="card">
+<h3>📜 Rules</h3>
+<div id="rulesBox">Loading...</div>
+</div>
+
+<div class="card">
+<h3>🔔 Notifications</h3>
+<button class="btn" onclick="enableNotif()">Enable Notifications</button>
+</div>
+
+<div class="card">
+<h3>👑 Admin Contact</h3>
+<a href="https://t.me/Mrbrave_robot">Open Admin Bot</a>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+
+<script>
+firebase.initializeApp({
+ apiKey:"AIzaSyDoOwqWcWTKL0SBCKdB6pqb64hl1kz0l2c",
+ authDomain:"goat--bro.firebaseapp.com",
+ databaseURL:"https://goat--bro-default-rtdb.firebaseio.com",
+ projectId:"goat--bro",
+ storageBucket:"goat--bro.firebasestorage.app",
+ messagingSenderId:"1058568757005",
+ appId:"1:1058568757005:web:340272be715b5f1769da44"
+});
+
+const db=firebase.database();
+const messaging=firebase.messaging();
+
+navigator.serviceWorker.register("firebase-messaging-sw.js");
+
+async function enableNotif(){
+ const permission=await Notification.requestPermission();
+ if(permission==="granted"){
+  const token=await messaging.getToken({vapidKey:"BBEYb1aCc9Fxp0nsQBKWdScNtRf1E5Cei4g-WoT9kOTBzTMpmapcqLsrwtiU5ihuuTAmtazQVNLZTJMarEJIKa0"});
+  db.ref("tokens/"+token).set(true);
+  alert("Enabled");
+ }
+}
+
+db.ref("push").on("value",(snap)=>{
+ const data=snap.val();
+ if(data){
+  new Notification(data.title,{body:data.body});
+ }
+});
+
+db.ref("rules").on("value",snap=>{
+ if(snap.val()) document.getElementById("rulesBox").innerHTML=snap.val();
+});
+
+async function loadPlayers(){
+ try{
+  const res=await fetch("https://api.mcsrvstat.us/2/goatbro.minefort.com");
+  const data=await res.json();
+  if(data.players) document.getElementById("players").innerText=data.players.online;
+ }catch(e){}
+}
+loadPlayers();
+setInterval(loadPlayers,60000);
+
+async function checkServer(){
+ try{
+  const res=await fetch("https://api.mcsrvstat.us/2/goatbro.minefort.com");
+  const data=await res.json();
+  if(data.online && !localStorage.online){
+    localStorage.online=true;
+    new Notification("Server Online",{body:"Join now!"});
+  }
+  if(!data.online) localStorage.removeItem("online");
+ }catch(e){}
+}
+setInterval(checkServer,60000);
+</script>
+
+</body>
+</html>
